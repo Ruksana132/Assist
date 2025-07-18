@@ -15,7 +15,9 @@ import {
   Search,
   Download,
   Calendar,
-  Award
+  Award,
+  Upload,
+  FileSpreadsheet
 } from 'lucide-react';
 import { format } from 'date-fns';
 import * as XLSX from 'xlsx';
@@ -29,19 +31,41 @@ export const Dashboard: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showCertificate, setShowCertificate] = useState<AssistRecord | null>(null);
   const [formData, setFormData] = useState({
+    // Vehicle Sale Date
+    vehicleSaleDate: '',
+    vehicleSaleDateDocument: null as File | null,
+    
+    // Customer Information
     customerName: '',
+    emailAddress: '',
+    contactNumber: '',
+    gstNumber: '',
+    
+    // Vehicle Information
     registrationNo: '',
-    workshopName: userProfile?.workshopName || '',
-    customerPhone: '',
-    customerEmail: '',
     vehicleMake: '',
     vehicleModel: '',
     vehicleYear: '',
+    chassisNumber: '',
+    engineNumber: '',
+    
+    // Service Information
     serviceType: '',
     serviceDescription: '',
     estimatedCost: '',
     actualCost: '',
-    status: 'pending' as 'pending' | 'in-progress' | 'completed' | 'cancelled'
+    status: 'pending' as 'pending' | 'in-progress' | 'completed' | 'cancelled',
+    
+    // Workshop
+    workshopName: userProfile?.workshopName || '',
+    
+    // Additional fields
+    mileage: '',
+    fuelType: '',
+    insuranceProvider: '',
+    insuranceExpiryDate: '',
+    lastServiceDate: '',
+    nextServiceDue: ''
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -67,38 +91,60 @@ export const Dashboard: React.FC = () => {
 
   const resetForm = () => {
     setFormData({
+      vehicleSaleDate: '',
+      vehicleSaleDateDocument: null,
       customerName: '',
+      emailAddress: '',
+      contactNumber: '',
+      gstNumber: '',
       registrationNo: '',
-      workshopName: userProfile?.workshopName || '',
-      customerPhone: '',
-      customerEmail: '',
       vehicleMake: '',
       vehicleModel: '',
       vehicleYear: '',
+      chassisNumber: '',
+      engineNumber: '',
       serviceType: '',
       serviceDescription: '',
       estimatedCost: '',
       actualCost: '',
-      status: 'pending'
+      status: 'pending',
+      workshopName: userProfile?.workshopName || '',
+      mileage: '',
+      fuelType: '',
+      insuranceProvider: '',
+      insuranceExpiryDate: '',
+      lastServiceDate: '',
+      nextServiceDue: ''
     });
   };
 
   const handleEdit = (record: AssistRecord) => {
     setEditingId(record.id!);
     setFormData({
+      vehicleSaleDate: (record as any).vehicleSaleDate || '',
+      vehicleSaleDateDocument: null,
       customerName: record.customerName,
+      emailAddress: (record as any).emailAddress || '',
+      contactNumber: (record as any).contactNumber || '',
+      gstNumber: (record as any).gstNumber || '',
       registrationNo: record.registrationNo,
-      workshopName: record.workshopName,
-      customerPhone: (record as any).customerPhone || '',
-      customerEmail: (record as any).customerEmail || '',
       vehicleMake: (record as any).vehicleMake || '',
       vehicleModel: (record as any).vehicleModel || '',
       vehicleYear: (record as any).vehicleYear || '',
+      chassisNumber: (record as any).chassisNumber || '',
+      engineNumber: (record as any).engineNumber || '',
       serviceType: (record as any).serviceType || '',
       serviceDescription: (record as any).serviceDescription || '',
       estimatedCost: (record as any).estimatedCost || '',
       actualCost: (record as any).actualCost || '',
-      status: (record as any).status || 'pending'
+      status: (record as any).status || 'pending',
+      workshopName: record.workshopName,
+      mileage: (record as any).mileage || '',
+      fuelType: (record as any).fuelType || '',
+      insuranceProvider: (record as any).insuranceProvider || '',
+      insuranceExpiryDate: (record as any).insuranceExpiryDate || '',
+      lastServiceDate: (record as any).lastServiceDate || '',
+      nextServiceDue: (record as any).nextServiceDue || ''
     });
   };
 
@@ -131,6 +177,20 @@ export const Dashboard: React.FC = () => {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'ASSIST Records');
     XLSX.writeFile(workbook, `assist-records-${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+  };
+
+  const exportToCSV = () => {
+    const csvContent = [
+      Object.keys(records[0] || {}).join(','),
+      ...records.map(record => Object.values(record).join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `assist-records-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    a.click();
   };
 
   const filteredRecords = records.filter(record =>
@@ -177,27 +237,34 @@ export const Dashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      {/* Header - Matching the blue design from screenshot */}
+      <header className="bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center">
-              <Car className="h-8 w-8 text-blue-600 mr-3" />
+              <div className="bg-white bg-opacity-20 p-2 rounded-lg mr-4">
+                <Car className="h-8 w-8 text-white" />
+              </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">ASSIST Dashboard</h1>
-                <p className="text-sm text-gray-600">{userProfile?.workshopName}</p>
+                <h1 className="text-2xl font-bold">ASSIST Management System</h1>
+                <p className="text-blue-100 text-sm">Age-based Service Support & Eligibility Tracking</p>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">
-                Welcome, {userProfile?.email}
-              </span>
+            <div className="flex items-center space-x-6">
+              <div className="flex items-center text-blue-100">
+                <FileText className="w-4 h-4 mr-2" />
+                <span className="text-sm">{records.length} Records</span>
+              </div>
+              <div className="flex items-center text-blue-100">
+                <Users className="w-4 h-4 mr-2" />
+                <span className="text-sm">Workshop Admin</span>
+              </div>
               <button
                 onClick={handleSignOut}
-                className="flex items-center px-3 py-2 text-gray-600 hover:text-gray-900 transition-colors"
+                className="flex items-center px-3 py-2 bg-white bg-opacity-20 rounded-lg hover:bg-opacity-30 transition-colors"
               >
                 <LogOut className="w-4 h-4 mr-2" />
-                Sign Out
+                Logout
               </button>
             </div>
           </div>
@@ -205,53 +272,386 @@ export const Dashboard: React.FC = () => {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <FileText className="h-8 w-8 text-blue-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Records</p>
-                <p className="text-2xl font-bold text-gray-900">{records.length}</p>
-              </div>
-            </div>
+        {/* Quick Actions Section */}
+        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+          <div className="flex items-center mb-4">
+            <FileText className="h-5 w-5 text-blue-600 mr-2" />
+            <h2 className="text-lg font-semibold text-gray-900">Quick Actions</h2>
           </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <Users className="h-8 w-8 text-green-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Completed</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {records.filter(r => (r as any).status === 'completed').length}
-                </p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <Calendar className="h-8 w-8 text-yellow-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">In Progress</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {records.filter(r => (r as any).status === 'in-progress').length}
-                </p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <Car className="h-8 w-8 text-purple-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Pending</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {records.filter(r => (r as any).status === 'pending').length}
-                </p>
-              </div>
-            </div>
+          <div className="flex flex-wrap gap-3">
+            <button
+              onClick={exportToExcel}
+              className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            >
+              <FileSpreadsheet className="w-4 h-4 mr-2" />
+              Export Excel
+            </button>
+            <button
+              onClick={exportToCSV}
+              className="flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Export CSV
+            </button>
+            <button
+              onClick={() => setIsAdding(true)}
+              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Export Data
+            </button>
+            <button className="flex items-center px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors">
+              <Upload className="w-4 h-4 mr-2" />
+              Import Data
+            </button>
           </div>
         </div>
 
-        {/* Main Content */}
+        {/* New Service Record Form */}
+        {(isAdding || editingId) && (
+          <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+            <div className="flex items-center mb-6">
+              <FileText className="h-5 w-5 text-blue-600 mr-2" />
+              <h2 className="text-lg font-semibold text-gray-900">New Service Record</h2>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-8">
+              {/* Vehicle Sale Date Section */}
+              <div className="border-l-4 border-purple-500 pl-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Vehicle Sale Date</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Vehicle Sale Date <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      value={formData.vehicleSaleDate}
+                      onChange={(e) => setFormData({ ...formData, vehicleSaleDate: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Vehicle Sale Date Document
+                    </label>
+                    <input
+                      type="file"
+                      onChange={(e) => setFormData({ ...formData, vehicleSaleDateDocument: e.target.files?.[0] || null })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      accept=".pdf,.jpg,.jpeg,.png"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Customer Information Section */}
+              <div className="border-l-4 border-blue-500 pl-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Customer Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Customer Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.customerName}
+                      onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Email Address <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="email"
+                      value={formData.emailAddress}
+                      onChange={(e) => setFormData({ ...formData, emailAddress: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Contact Number <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="tel"
+                      value={formData.contactNumber}
+                      onChange={(e) => setFormData({ ...formData, contactNumber: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      GST Number
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.gstNumber}
+                      onChange={(e) => setFormData({ ...formData, gstNumber: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Vehicle Information Section */}
+              <div className="border-l-4 border-green-500 pl-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Vehicle Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Registration Number <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.registrationNo}
+                      onChange={(e) => setFormData({ ...formData, registrationNo: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Vehicle Make
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.vehicleMake}
+                      onChange={(e) => setFormData({ ...formData, vehicleMake: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Vehicle Model
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.vehicleModel}
+                      onChange={(e) => setFormData({ ...formData, vehicleModel: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Vehicle Year
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.vehicleYear}
+                      onChange={(e) => setFormData({ ...formData, vehicleYear: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Chassis Number
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.chassisNumber}
+                      onChange={(e) => setFormData({ ...formData, chassisNumber: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Engine Number
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.engineNumber}
+                      onChange={(e) => setFormData({ ...formData, engineNumber: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Mileage (km)
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.mileage}
+                      onChange={(e) => setFormData({ ...formData, mileage: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Fuel Type
+                    </label>
+                    <select
+                      value={formData.fuelType}
+                      onChange={(e) => setFormData({ ...formData, fuelType: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Select Fuel Type</option>
+                      <option value="petrol">Petrol</option>
+                      <option value="diesel">Diesel</option>
+                      <option value="cng">CNG</option>
+                      <option value="electric">Electric</option>
+                      <option value="hybrid">Hybrid</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Service Information Section */}
+              <div className="border-l-4 border-orange-500 pl-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Service Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Service Type
+                    </label>
+                    <select
+                      value={formData.serviceType}
+                      onChange={(e) => setFormData({ ...formData, serviceType: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Select Service Type</option>
+                      <option value="maintenance">Regular Maintenance</option>
+                      <option value="repair">Repair</option>
+                      <option value="inspection">Inspection</option>
+                      <option value="bodywork">Body Work</option>
+                      <option value="warranty">Warranty Service</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Status
+                    </label>
+                    <select
+                      value={formData.status}
+                      onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="pending">Pending</option>
+                      <option value="in-progress">In Progress</option>
+                      <option value="completed">Completed</option>
+                      <option value="cancelled">Cancelled</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Last Service Date
+                    </label>
+                    <input
+                      type="date"
+                      value={formData.lastServiceDate}
+                      onChange={(e) => setFormData({ ...formData, lastServiceDate: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Next Service Due
+                    </label>
+                    <input
+                      type="date"
+                      value={formData.nextServiceDue}
+                      onChange={(e) => setFormData({ ...formData, nextServiceDue: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Service Description
+                    </label>
+                    <textarea
+                      value={formData.serviceDescription}
+                      onChange={(e) => setFormData({ ...formData, serviceDescription: e.target.value })}
+                      rows={4}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Describe the service work performed..."
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Estimated Cost
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={formData.estimatedCost}
+                      onChange={(e) => setFormData({ ...formData, estimatedCost: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Actual Cost
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={formData.actualCost}
+                      onChange={(e) => setFormData({ ...formData, actualCost: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Insurance Information Section */}
+              <div className="border-l-4 border-red-500 pl-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Insurance Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Insurance Provider
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.insuranceProvider}
+                      onChange={(e) => setFormData({ ...formData, insuranceProvider: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Insurance Expiry Date
+                    </label>
+                    <input
+                      type="date"
+                      value={formData.insuranceExpiryDate}
+                      onChange={(e) => setFormData({ ...formData, insuranceExpiryDate: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Form Actions */}
+              <div className="flex gap-4 pt-6 border-t">
+                <button
+                  type="submit"
+                  className="flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  {editingId ? 'Update Record' : 'Save Record'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCancel}
+                  className="flex items-center px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                >
+                  <X className="w-4 h-4 mr-2" />
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {/* Records Table */}
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
             <h2 className="text-2xl font-bold text-gray-900">Service Records</h2>
@@ -267,13 +667,6 @@ export const Dashboard: React.FC = () => {
                 />
               </div>
               <button
-                onClick={exportToExcel}
-                className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Export
-              </button>
-              <button
                 onClick={() => setIsAdding(true)}
                 className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
@@ -283,181 +676,6 @@ export const Dashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Add/Edit Form */}
-          {(isAdding || editingId) && (
-            <div className="bg-gray-50 p-6 rounded-lg mb-6">
-              <h3 className="text-lg font-semibold mb-4">
-                {editingId ? 'Edit Service Record' : 'Add New Service Record'}
-              </h3>
-              <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Customer Name *
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.customerName}
-                    onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Phone Number
-                  </label>
-                  <input
-                    type="tel"
-                    value={formData.customerPhone}
-                    onChange={(e) => setFormData({ ...formData, customerPhone: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    value={formData.customerEmail}
-                    onChange={(e) => setFormData({ ...formData, customerEmail: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Registration No *
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.registrationNo}
-                    onChange={(e) => setFormData({ ...formData, registrationNo: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Vehicle Make
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.vehicleMake}
-                    onChange={(e) => setFormData({ ...formData, vehicleMake: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Vehicle Model
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.vehicleModel}
-                    onChange={(e) => setFormData({ ...formData, vehicleModel: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Vehicle Year
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.vehicleYear}
-                    onChange={(e) => setFormData({ ...formData, vehicleYear: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Service Type
-                  </label>
-                  <select
-                    value={formData.serviceType}
-                    onChange={(e) => setFormData({ ...formData, serviceType: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Select Service Type</option>
-                    <option value="maintenance">Regular Maintenance</option>
-                    <option value="repair">Repair</option>
-                    <option value="inspection">Inspection</option>
-                    <option value="bodywork">Body Work</option>
-                    <option value="other">Other</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Status
-                  </label>
-                  <select
-                    value={formData.status}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="pending">Pending</option>
-                    <option value="in-progress">In Progress</option>
-                    <option value="completed">Completed</option>
-                    <option value="cancelled">Cancelled</option>
-                  </select>
-                </div>
-                <div className="md:col-span-2 lg:col-span-3">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Service Description
-                  </label>
-                  <textarea
-                    value={formData.serviceDescription}
-                    onChange={(e) => setFormData({ ...formData, serviceDescription: e.target.value })}
-                    rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Estimated Cost
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={formData.estimatedCost}
-                    onChange={(e) => setFormData({ ...formData, estimatedCost: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Actual Cost
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={formData.actualCost}
-                    onChange={(e) => setFormData({ ...formData, actualCost: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div className="md:col-span-2 lg:col-span-3 flex gap-2">
-                  <button
-                    type="submit"
-                    className="flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
-                  >
-                    <Save className="w-4 h-4 mr-2" />
-                    Save Record
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleCancel}
-                    className="flex items-center px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
-                  >
-                    <X className="w-4 h-4 mr-2" />
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            </div>
-          )}
-
-          {/* Records Table */}
           <div className="overflow-x-auto">
             <table className="w-full table-auto">
               <thead>
@@ -483,7 +701,7 @@ export const Dashboard: React.FC = () => {
                       <td className="px-4 py-3">
                         <div>
                           <div className="text-sm font-medium text-gray-900">{record.customerName}</div>
-                          <div className="text-sm text-gray-500">{(record as any).customerPhone}</div>
+                          <div className="text-sm text-gray-500">{(record as any).contactNumber}</div>
                         </div>
                       </td>
                       <td className="px-4 py-3">
@@ -514,6 +732,15 @@ export const Dashboard: React.FC = () => {
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
+                          {(record as any).status === 'completed' && (
+                            <button
+                              onClick={() => setShowCertificate(record)}
+                              className="p-1 text-green-600 hover:text-green-800 transition-colors"
+                              title="Generate Certificate"
+                            >
+                              <Award className="w-4 h-4" />
+                            </button>
+                          )}
                           <button
                             onClick={() => handleDelete(record.id!)}
                             className="p-1 text-red-600 hover:text-red-800 transition-colors"
