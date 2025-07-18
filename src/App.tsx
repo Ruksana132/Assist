@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAssist } from './hooks/useAssist';
+import { useAssist } from './hooks/useAssist';
 import { AssistRecord } from './services/assistService';
 import { Plus, Edit2, Trash2, Save, X } from 'lucide-react';
 
