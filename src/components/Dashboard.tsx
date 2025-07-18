@@ -14,10 +14,12 @@ import {
   FileText,
   Search,
   Download,
-  Calendar
+  Calendar,
+  Award
 } from 'lucide-react';
 import { format } from 'date-fns';
 import * as XLSX from 'xlsx';
+import { CertificateGenerator } from './CertificateGenerator';
 
 export const Dashboard: React.FC = () => {
   const { records, loading, error, createRecord, updateRecord, deleteRecord } = useAssist();
@@ -25,6 +27,7 @@ export const Dashboard: React.FC = () => {
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showCertificate, setShowCertificate] = useState<AssistRecord | null>(null);
   const [formData, setFormData] = useState({
     customerName: '',
     registrationNo: '',
@@ -528,6 +531,14 @@ export const Dashboard: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Certificate Generator Modal */}
+      {showCertificate && (
+        <CertificateGenerator
+          record={showCertificate}
+          onClose={() => setShowCertificate(null)}
+        />
+      )}
     </div>
   );
 };
