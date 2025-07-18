@@ -16,6 +16,16 @@ export interface AssistRecord {
   customerName: string;
   registrationNo: string;
   workshopName: string;
+  customerPhone?: string;
+  customerEmail?: string;
+  vehicleMake?: string;
+  vehicleModel?: string;
+  vehicleYear?: string;
+  serviceType?: string;
+  serviceDescription?: string;
+  estimatedCost?: string;
+  actualCost?: string;
+  status?: 'pending' | 'in-progress' | 'completed' | 'cancelled';
   createdAt?: Date;
   updatedAt?: Date;
 }
