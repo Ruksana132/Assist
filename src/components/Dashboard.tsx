@@ -732,6 +732,13 @@ export const Dashboard: React.FC = () => {
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
+                          <button
+                            onClick={() => setShowCertificate(record)}
+                            className="p-1 text-green-600 hover:text-green-800 transition-colors"
+                            title="Generate Certificate"
+                          >
+                            <Award className="w-4 h-4" />
+                          </button>
                           {(record as any).status === 'completed' && (
                             <button
                               onClick={() => setShowCertificate(record)}
