@@ -163,16 +163,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onSignIn, onSignUp, loading,
             </p>
           </div>
         </div>
-
-        {/* Demo Credentials */}
-        <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <h3 className="text-sm font-semibold text-yellow-800 mb-2">Demo Credentials</h3>
-          <p className="text-sm text-yellow-700">
-            <strong>Email:</strong> demo@workshop.com<br />
-            <strong>Password:</strong> demo123
-          </p>
-        </div>
-      </div>
+       </div>
     </div>
   );
 };
